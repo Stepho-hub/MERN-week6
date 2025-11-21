@@ -1,21 +1,11 @@
 import request from 'supertest';
 import { createApp } from './app.js';
-import fs from 'fs';
 
 describe('API Endpoints', () => {
   let app;
-  let dbPath;
 
-  beforeEach(() => {
-    dbPath = `./test-${Date.now()}-${Math.random()}.db`;
-    app = createApp(dbPath);
-  });
-
-  afterEach(() => {
-    // Clean up database file
-    if (fs.existsSync(dbPath)) {
-      fs.unlinkSync(dbPath);
-    }
+  beforeEach(async () => {
+    app = await createApp();
   });
 
   describe('GET /api/users', () => {
@@ -35,7 +25,7 @@ describe('API Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body).toHaveLength(1);
       expect(response.body[0]).toMatchObject(newUser);
-      expect(response.body[0]).toHaveProperty('id');
+      expect(response.body[0]).toHaveProperty('_id');
     });
   });
 
@@ -45,8 +35,8 @@ describe('API Endpoints', () => {
       const response = await request(app).post('/api/users').send(newUser);
       expect(response.status).toBe(201);
       expect(response.body).toMatchObject(newUser);
-      expect(response.body).toHaveProperty('id');
-      expect(typeof response.body.id).toBe('number');
+      expect(response.body).toHaveProperty('_id');
+      expect(typeof response.body._id).toBe('string');
     });
 
     test('sanitizes input data', async () => {
