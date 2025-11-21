@@ -6,13 +6,21 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "start": "node server/index.js",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "jest",
+    "test:client": "jest --projects client",
+    "test:server": "jest --projects server",
+    "test:integration": "jest --testPathPattern=integration",
+    "test:unit": "jest --testPathPattern=unit",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "mongoose": "^8.20.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },

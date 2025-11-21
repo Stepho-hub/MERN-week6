@@ -1,8 +1,6 @@
 import { useState, memo } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage.js';
 
-function UserForm() {
-  const [users, setUsers] = useLocalStorage('users', []);
+function UserForm({ onUserCreated }) {
   const [formData, setFormData] = useState({ name: '', email: '' });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -15,30 +13,64 @@ function UserForm() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('[DEBUG] UserForm: Submitting form with data:', formData);
+    console.time('[PERF] UserForm: API request duration');
     setLoading(true);
     setError(null);
     setSuccess(false);
 
     try {
-      // Check for duplicate email
-      const existingUser = users.find(user => user.email.toLowerCase() === formData.email.toLowerCase());
-      if (existingUser) {
-        throw new Error('Email already exists');
+      console.log('[DEBUG] UserForm: Making API request to /api/users');
+      console.log('[DEBUG] UserForm: Request payload:', JSON.stringify(formData));
+      console.log('[DEBUG] UserForm: Current window location:', window.location.href);
+      const response = await fetch('/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      console.log('[DEBUG] UserForm: API response status:', response.status);
+      console.log('[DEBUG] UserForm: Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        let errorMessage = 'Failed to create user';
+        try {
+          const errorData = await response.json();
+          console.error('[DEBUG] UserForm: API error response:', errorData);
+          errorMessage = errorData.error || errorMessage;
+        } catch (jsonErr) {
+          console.error('[DEBUG] UserForm: Failed to parse error response:', jsonErr);
+        }
+        throw new Error(errorMessage);
       }
 
-      // Create new user
-      const newUser = {
-        name: formData.name.trim(),
-        email: formData.email.toLowerCase().trim()
-      };
-
-      // Add to localStorage
-      const updatedUsers = [...users, newUser];
-      setUsers(updatedUsers);
-
+      let newUser;
+      try {
+        newUser = await response.json();
+      } catch (jsonErr) {
+        console.error('[DEBUG] UserForm: Failed to parse success response:', jsonErr);
+        throw new Error('Invalid response from server');
+      }
+      console.timeEnd('[PERF] UserForm: API request duration');
+      console.log('[DEBUG] UserForm: User created successfully:', newUser);
       setSuccess(true);
       setFormData({ name: '', email: '' });
+
+      if (onUserCreated) {
+        onUserCreated(newUser);
+      }
     } catch (err) {
+      console.timeEnd('[PERF] UserForm: API request duration');
+      console.error('[DEBUG] UserForm: Error during submission:', err);
+      console.error('[DEBUG] UserForm: Error type:', err.constructor.name);
+      console.error('[DEBUG] UserForm: Error message:', err.message);
+      console.error('[DEBUG] UserForm: Error stack:', err.stack);
+      if (err.name === 'TypeError' && err.message.includes('fetch')) {
+        console.error('[DEBUG] UserForm: This appears to be a network connectivity issue');
+        console.error('[DEBUG] UserForm: Check if the server is running and accessible');
+      }
       setError(err.message);
     } finally {
       setLoading(false);
