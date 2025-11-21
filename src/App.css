@@ -1,0 +1,9 @@
+
+/* Add smooth transitions for card hover (optional) */
+.card {
+	transition: box-shadow 0.2s, transform 0.2s;
+}
+.card:hover {
+	box-shadow: 0 8px 32px rgba(80, 80, 180, 0.12);
+	transform: translateY(-2px) scale(1.01);
+}
